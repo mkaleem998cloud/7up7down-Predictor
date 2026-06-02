@@ -9,7 +9,7 @@ st.markdown("""
     .big-font { font-size:26px !important; font-weight: bold; color: #4CAF50; text-align: center; }
     .prediction-box { padding: 20px; background-color: #1E1E1E; border-radius: 10px; border: 2px solid #4CAF50; text-align: center; }
     </style>
-    """, unsafe_index=True)
+    """, unsafe_allow_html=True)
 
 st.title("🎲 7Up 7Down Smart Web Predictor")
 st.write("Pehle pichle 3 rounds ka data enter karein, system agla round automatic predict karega.")
@@ -73,4 +73,4 @@ if total > 0:
     st.markdown("---")
     st.write(f"**Recent History (Pichle {total} Rounds):**")
     st.write(" ➡️ ".join(history[-10:]))
-  
+    
