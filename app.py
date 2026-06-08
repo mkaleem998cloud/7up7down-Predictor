@@ -16,12 +16,11 @@ st.markdown("""
         background-color: #0d0e15 !important;
     }
     .block-container {
-        padding: 0.2rem 0.5rem !important;
+        padding: 0.1rem 0.4rem !important;
     }
     
     /* Auto Hide Default Overheads */
     footer, header {visibility: hidden;}
-    .stAlert { padding: 4px !important; margin-bottom: 2px !important; font-size: 11px !important; }
 
     /* Custom Mobile Grid for Badges */
     .mobile-row {
@@ -31,13 +30,13 @@ st.markdown("""
         align-items: center !important;
         width: 100% !important;
         gap: 6px !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 2px !important;
     }
     
     .acc-badge {
         flex: 1 !important;
         text-align: center;
-        padding: 5px 0px;
+        padding: 4px 0px;
         border-radius: 6px;
         font-size: 11px;
         font-weight: bold;
@@ -62,11 +61,11 @@ st.markdown("""
         gap: 4px;
         overflow-x: auto;
         white-space: nowrap;
-        padding: 4px 6px;
+        padding: 6px;
         background: #10141d;
         border-radius: 6px;
         border: 1px dashed #333;
-        min-height: 28px;
+        min-height: 32px;
         align-items: center;
     }
     .hist-badge {
@@ -76,6 +75,19 @@ st.markdown("""
         border-radius: 4px;
         color: white;
     }
+    
+    /* Inline Status Feedback Badge */
+    .status-alert {
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 2px;
+        background-color: #161b22;
+        border: 1px solid #238636;
+        color: #2ea44f;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -83,7 +95,7 @@ st.markdown("""
 API_KEY = "AQ.Ab8RN6IXxkksAQGeepnhbEl1zS4EYc5RR0rcuzVzj_-3zpqTSg"
 
 ai_active = True
-if API_KEY != "AQ.Ab8RN6IXxkksAQGeepnhbEl1zS4EYc5RR0rcuzVzj_-3zpqTSg" and API_KEY.strip() != "":
+if API_KEY != "YOUR_GEMINI_API_KEY_HERE" and API_KEY.strip() != "":
     try:
         genai.configure(api_key=API_KEY)
         ai_active = True
@@ -93,6 +105,8 @@ if API_KEY != "AQ.Ab8RN6IXxkksAQGeepnhbEl1zS4EYc5RR0rcuzVzj_-3zpqTSg" and API_KE
 # --- State Sync Engine ---
 if 'history' not in st.session_state:
     st.session_state.history = []
+if 'last_status' not in st.session_state:
+    st.session_state.last_status = "Waiting for data..."
 if 'ai_prediction' not in st.session_state:
     st.session_state.ai_prediction = {
         "prediction": "7Up", "probability": "55%", 
@@ -139,9 +153,6 @@ def process_prediction():
 # --- Graphical Interface Layout ---
 st.markdown('<div style="font-size:16px; font-weight:800; text-align:center; color:#00f2fe; margin-bottom:2px;">🤖 AI PREDICTOR PRO</div>', unsafe_allow_html=True)
 
-if not ai_active:
-    st.info("💡 Running on Local Probability Engine. Insert your Gemini API Key in code to activate Full Cloud AI.")
-
 # Row 1: Action Entry Points
 st.markdown('<div style="font-size:10px; color:#777; font-weight:bold; text-transform:uppercase; margin:2px 0;">📊 Tap Last Result</div>', unsafe_allow_html=True)
 
@@ -149,18 +160,21 @@ col1, col2, col3 = st.columns(3)
 with col1:
     if st.button("🔼 7Up", key="action_up", use_container_width=True):
         st.session_state.history.append("7Up")
-        st.toast("🟢 Data Added 7Up Successfully!", icon="✅")
+        st.session_state.last_status = "🟢 Data Added 7Up Successfully!"
         process_prediction()
 with col2:
     if st.button("🎲 7Exit", key="action_tie", use_container_width=True):
         st.session_state.history.append("Tie")
-        st.toast("🟡 Data Added 7Exit Successfully!", icon="✅")
+        st.session_state.last_status = "🟡 Data Added 7Exit Successfully!"
         process_prediction()
 with col3:
     if st.button("🔽 7Down", key="action_down", use_container_width=True):
         st.session_state.history.append("7Down")
-        st.toast("🔴 Data Added 7Down Successfully!", icon="✅")
+        st.session_state.last_status = "🔴 Data Added 7Down Successfully!"
         process_prediction()
+
+# Dynamic Status Badge (Replaced pop-up toast completely to avoid hiding buttons)
+st.markdown(f'<div class="status-alert">{st.session_state.last_status}</div>', unsafe_allow_html=True)
 
 # Row 2: Status Matrices
 st.markdown('<div style="font-size:10px; color:#777; font-weight:bold; text-transform:uppercase; margin:4px 0 2px 0;">📈 Possible Accuracy</div>', unsafe_allow_html=True)
@@ -196,7 +210,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# NEW FEATURE: Dynamic History Tracking Line (Live Record View)
+# Row 4: Dynamic History Tracking Line (Live Record View Fixed)
 st.markdown('<div style="font-size:10px; color:#777; font-weight:bold; text-transform:uppercase; margin:4px 0 2px 0;">📜 Recently Added Data Record</div>', unsafe_allow_html=True)
 
 if st.session_state.history:
@@ -211,15 +225,15 @@ if st.session_state.history:
 else:
     st.markdown('<div class="history-container" style="color:#555; font-size:10px; justify-content:center;">No data input yet</div>', unsafe_allow_html=True)
 
-# Compact Functional Data Clean Reset Row (Pushed down slightly)
+# Row 5: Clear Functional Data Reset
 if st.session_state.history:
-    st.markdown('<div style="height:2px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="margin-top: 4px;"></div>', unsafe_allow_html=True)
     if st.button("🧹 Clear Training Data", key="wipe_engine", use_container_width=True):
         st.session_state.history = []
+        st.session_state.last_status = "Data engine reset successfully."
         st.session_state.ai_prediction = {
             "prediction": "7Up", "probability": "55%", 
             "up_prob": "33%", "down_prob": "33%", "tie_prob": "34%",
             "analysis": "System online. Tap history to train."
         }
         st.rerun()
-            
