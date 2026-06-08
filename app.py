@@ -94,8 +94,8 @@ st.markdown("""
 # --- AI API Key Secure Processing ---
 API_KEY = "AQ.Ab8RN6IXxkksAQGeepnhbEl1zS4EYc5RR0rcuzVzj_-3zpqTSg"
 
-ai_active = True
-if API_KEY != "YOUR_GEMINI_API_KEY_HERE" and API_KEY.strip() != "":
+ai_active = False
+if API_KEY != "AQ.Ab8RN6IXxkksAQGeepnhbEl1zS4EYc5RR0rcuzVzj_-3zpqTSg" and API_KEY.strip() != "":
     try:
         genai.configure(api_key=API_KEY)
         ai_active = True
@@ -162,16 +162,19 @@ with col1:
         st.session_state.history.append("7Up")
         st.session_state.last_status = "🟢 Data Added 7Up Successfully!"
         process_prediction()
+        st.rerun()
 with col2:
     if st.button("🎲 7Exit", key="action_tie", use_container_width=True):
         st.session_state.history.append("Tie")
         st.session_state.last_status = "🟡 Data Added 7Exit Successfully!"
         process_prediction()
+        st.rerun()
 with col3:
     if st.button("🔽 7Down", key="action_down", use_container_width=True):
         st.session_state.history.append("7Down")
         st.session_state.last_status = "🔴 Data Added 7Down Successfully!"
         process_prediction()
+        st.rerun()
 
 # Dynamic Status Badge (Replaced pop-up toast completely to avoid hiding buttons)
 st.markdown(f'<div class="status-alert">{st.session_state.last_status}</div>', unsafe_allow_html=True)
