@@ -80,10 +80,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- AI API Key Secure Processing ---
-API_KEY = "YOUR_GEMINI_API_KEY_HERE"
+API_KEY = "AQ.Ab8RN6IXxkksAQGeepnhbEl1zS4EYc5RR0rcuzVzj_-3zpqTSg"
 
 ai_active = False
-if API_KEY != "YOUR_GEMINI_API_KEY_HERE" and API_KEY.strip() != "":
+if API_KEY != "AQ.Ab8RN6IXxkksAQGeepnhbEl1zS4EYc5RR0rcuzVzj_-3zpqTSg" and API_KEY.strip() != "":
     try:
         genai.configure(api_key=API_KEY)
         ai_active = True
