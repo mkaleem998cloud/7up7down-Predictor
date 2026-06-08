@@ -5,7 +5,7 @@ import json
 # Page Configuration
 st.set_page_config(page_title="AI Predictor Pro", page_icon="🤖", layout="centered")
 
-# --- Overhauled Premium Responsive CSS Framework (Anti-Vertical Grid) ---
+# --- Overhauled Premium CSS Framework (Compact Spacing & Badges) ---
 st.markdown("""
     <style>
     /* Prevent Any Scrolling Globally */
@@ -16,14 +16,14 @@ st.markdown("""
         background-color: #0d0e15 !important;
     }
     .block-container {
-        padding: 0.3rem 0.5rem !important;
+        padding: 0.2rem 0.5rem !important;
     }
     
     /* Auto Hide Default Overheads */
     footer, header {visibility: hidden;}
-    .stAlert { padding: 5px !important; margin-bottom: 4px !important; font-size: 11px !important; }
+    .stAlert { padding: 4px !important; margin-bottom: 2px !important; font-size: 11px !important; }
 
-    /* Custom Mobile Grid for Buttons - Absolute Horizontal Row */
+    /* Custom Mobile Grid for Badges */
     .mobile-row {
         display: flex !important;
         flex-direction: row !important;
@@ -31,30 +31,13 @@ st.markdown("""
         align-items: center !important;
         width: 100% !important;
         gap: 6px !important;
-        margin-bottom: 6px !important;
+        margin-bottom: 4px !important;
     }
     
-    /* Native Styling for Input Triggers */
-    .game-btn {
-        flex: 1 !important;
-        text-align: center;
-        padding: 10px 0px;
-        border-radius: 8px;
-        font-weight: bold;
-        font-size: 13px;
-        color: white;
-        border: none;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.3);
-    }
-    .btn-up { background: linear-gradient(135deg, #1b5e20, #4caf50); }
-    .btn-tie { background: linear-gradient(135deg, #e65100, #ffb300); color: black; }
-    .btn-down { background: linear-gradient(135deg, #b71c1c, #f44336); }
-    
-    /* Styling for Static Accuracy Badges */
     .acc-badge {
         flex: 1 !important;
         text-align: center;
-        padding: 6px 0px;
+        padding: 5px 0px;
         border-radius: 6px;
         font-size: 11px;
         font-weight: bold;
@@ -66,16 +49,37 @@ st.markdown("""
     /* Target Result Panel Output Display */
     .premium-display {
         background: linear-gradient(145deg, #151b26, #0f131c);
-        padding: 8px 12px;
+        padding: 6px 12px;
         border-radius: 8px;
         border-top: 3px solid #00f2fe;
         box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+
+    /* History Badge Stream View */
+    .history-container {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 4px 6px;
+        background: #10141d;
+        border-radius: 6px;
+        border: 1px dashed #333;
+        min-height: 28px;
+        align-items: center;
+    }
+    .hist-badge {
+        font-size: 10px;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: white;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # --- AI API Key Secure Processing ---
-# Agar key nahi hai toh default mock probabilities load hongi taaki layout chalta rahe
 API_KEY = "YOUR_GEMINI_API_KEY_HERE"
 
 ai_active = False
@@ -99,7 +103,6 @@ if 'ai_prediction' not in st.session_state:
 def process_prediction():
     if not st.session_state.history: return
     if not ai_active:
-        # Fallback dynamic formula generator if real API key is absent
         import random
         u, d, t = random.randint(40, 70), random.randint(20, 40), random.randint(5, 15)
         total = u + d + t
@@ -116,7 +119,7 @@ def process_prediction():
     try:
         model = genai.GenerativeModel('gemini-pro')
         prompt = f"""
-        Analyze 7Up 7Down dice history sequence: {st.session_state.st.session_state.history}.
+        Analyze 7Up 7Down dice history sequence: {st.session_state.history}.
         Output STRICT JSON format:
         {{
             "prediction": "7Up or 7Down or Tie",
@@ -134,13 +137,13 @@ def process_prediction():
         pass
 
 # --- Graphical Interface Layout ---
-st.markdown('<div style="font-size:18px; font-weight:800; text-align:center; color:#00f2fe; margin-bottom:4px;">🤖 AI PREDICTOR PRO</div>', unsafe_allow_html=True)
+st.markdown('<div style="font-size:16px; font-weight:800; text-align:center; color:#00f2fe; margin-bottom:2px;">🤖 AI PREDICTOR PRO</div>', unsafe_allow_html=True)
 
 if not ai_active:
     st.info("💡 Running on Local Probability Engine. Insert your Gemini API Key in code to activate Full Cloud AI.")
 
-# Row 1: Action Entry Points via Query Parameters for responsive clicks
-st.markdown('<div style="font-size:11px; color:#777; font-weight:bold; text-transform:uppercase; margin:4px 0;">📊 Tap Last Result</div>', unsafe_allow_html=True)
+# Row 1: Action Entry Points
+st.markdown('<div style="font-size:10px; color:#777; font-weight:bold; text-transform:uppercase; margin:2px 0;">📊 Tap Last Result</div>', unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -159,8 +162,8 @@ with col3:
         st.toast("🔴 Data Added 7Down Successfully!", icon="✅")
         process_prediction()
 
-# Row 2: Status Matrices rendered in raw non-breaking flex framework
-st.markdown('<div style="font-size:11px; color:#777; font-weight:bold; text-transform:uppercase; margin:6px 0 2px 0;">📈 Possible Accuracy</div>', unsafe_allow_html=True)
+# Row 2: Status Matrices
+st.markdown('<div style="font-size:10px; color:#777; font-weight:bold; text-transform:uppercase; margin:4px 0 2px 0;">📈 Possible Accuracy</div>', unsafe_allow_html=True)
 
 st.markdown(f"""
 <div class="mobile-row">
@@ -171,7 +174,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Row 3: Target Output Panel Display
-st.markdown('<div style="font-size:11px; color:#777; font-weight:bold; text-transform:uppercase; margin:4px 0;">🎯 Final AI Target</div>', unsafe_allow_html=True)
+st.markdown('<div style="font-size:10px; color:#777; font-weight:bold; text-transform:uppercase; margin:2px 0;">🎯 Final AI Target</div>', unsafe_allow_html=True)
 
 pred = st.session_state.ai_prediction["prediction"]
 prob = st.session_state.ai_prediction["probability"]
@@ -184,18 +187,33 @@ else: color = "#FFC107"
 st.markdown(f"""
 <div class="premium-display" style="border-top-color: {color};">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="color:{color}; font-size:14px; font-weight:bold;">👉 TARGET: {pred}</span>
-        <span style="background-color:{color}; color:{"white" if color!="#FFC107" else "black"}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">{prob} MATCH</span>
+        <span style="color:{color}; font-size:13px; font-weight:bold;">👉 TARGET: {pred}</span>
+        <span style="background-color:{color}; color:{"white" if color!="#FFC107" else "black"}; padding:1px 5px; border-radius:4px; font-size:10px; font-weight:bold;">{prob} MATCH</span>
     </div>
-    <div style="margin-top: 4px; font-size: 11px; color: #a9b7c6;">
+    <div style="margin-top: 2px; font-size: 10px; color: #a9b7c6;">
         <b>Pattern:</b> {analysis}
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Compact Functional Data Clean Reset Row
+# NEW FEATURE: Dynamic History Tracking Line (Live Record View)
+st.markdown('<div style="font-size:10px; color:#777; font-weight:bold; text-transform:uppercase; margin:4px 0 2px 0;">📜 Recently Added Data Record</div>', unsafe_allow_html=True)
+
 if st.session_state.history:
-    st.markdown('<div style="height:4px;"></div>', unsafe_allow_html=True)
+    html_stream = '<div class="history-container">'
+    for idx, item in enumerate(st.session_state.history):
+        if item == "7Up": bg, text = "#1b5e20", "7Up"
+        elif item == "7Down": bg, text = "#b71c1c", "7Down"
+        else: bg, text = "#e65100", "Exit"
+        html_stream += f'<span class="hist-badge" style="background-color:{bg};">{idx+1}. {text}</span>'
+    html_stream += '</div>'
+    st.markdown(html_stream, unsafe_allow_html=True)
+else:
+    st.markdown('<div class="history-container" style="color:#555; font-size:10px; justify-content:center;">No data input yet</div>', unsafe_allow_html=True)
+
+# Compact Functional Data Clean Reset Row (Pushed down slightly)
+if st.session_state.history:
+    st.markdown('<div style="height:2px;"></div>', unsafe_allow_html=True)
     if st.button("🧹 Clear Training Data", key="wipe_engine", use_container_width=True):
         st.session_state.history = []
         st.session_state.ai_prediction = {
@@ -204,3 +222,4 @@ if st.session_state.history:
             "analysis": "System online. Tap history to train."
         }
         st.rerun()
+            
