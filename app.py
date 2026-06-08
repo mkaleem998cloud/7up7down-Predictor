@@ -1,122 +1,136 @@
 import streamlit as st
+import google.generativeai as genai
+import json
 
-# --- Page Configuration & No-Scroll CSS ---
-st.set_page_config(page_title="7Up 7Down Pro", page_icon="🎲", layout="centered")
+# Page Configuration for Mobile
+st.set_page_config(page_title="AI 7Up 7Down Predictor", page_icon="🤖", layout="centered")
 
-# CSS se margins aur text size ko mobile ke mutabiq chota aur tight kiya hai
+# --- CSS for Mobile UI Optimization ---
 st.markdown("""
     <style>
-    .block-container { padding-top: 1rem !important; padding-bottom: 0rem !important; }
-    h1 { font-size: 24px !important; margin-bottom: 5px !important; text-align: center; }
-    div.stButton > button { padding: 8px 5px !important; font-size: 14px !important; }
-    .stToast { bottom: 20px !important; }
+    .block-container { padding-top: 1rem; padding-bottom: 1rem; }
+    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; height: 45px; }
+    .result-box {
+        background-color: #1e1e1e;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #00f2fe;
+        margin-top: 10px;
+    }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# --- Top Header & Reset Row ---
-head_col1, head_col2 = st.columns([3, 1])
-with head_col1:
-    st.markdown("<h1>🎲 7Up 7Down Pro</h1>", unsafe_allow_html=True)
-with head_col2:
-    if st.button("🔄 Clear", use_container_width=True):
-        st.session_state.history = []
-        st.rerun()
+# --- AI API Setup ---
+# Apni Gemini API Key yahan dalein ya Streamlit secrets ka istemal karein
+# (Aap Google AI Studio se free API key le sakte hain)
+API_KEY = "YOUR_GEMINI_API_KEY_HERE" 
 
-# --- Session State ---
+if API_KEY != "YOUR_GEMINI_API_KEY_HERE":
+    genai.configure(api_key=API_KEY)
+else:
+    st.warning("⚠️ Please configure your Gemini API Key in the code.")
+
+# --- Session State Management ---
 if 'history' not in st.session_state:
     st.session_state.history = []
+if 'ai_prediction' not in st.session_state:
+    st.session_state.ai_prediction = {"prediction": "Waiting for data...", "probability": "--", "analysis": "Enter past rounds to start AI analysis."}
 
-# --- Data Input Buttons ---
+# --- Functions ---
+def get_ai_prediction(history_list):
+    """Gemini AI se probability aur analysis mangne ka function"""
+    if not history_list:
+        return
+        
+    try:
+        model = genai.GenerativeModel('gemini-pro')
+        
+        # AI ko strict instruction dene ke liye prompt
+        prompt = f"""
+        You are an expert mathematical and probability analyzer for the dice game 7Up 7Down.
+        Here is the sequence of the last recent game rounds (ordered from oldest to newest):
+        {history_list}
+        
+        Analyze the streaks, repetition patterns, and standard deviation probabilities. 
+        Predict the most likely NEXT outcome (7Up, 7Down, or Tie).
+        
+        Provide your response strictly in the following JSON format so I can parse it:
+        {{
+            "prediction": "7Up or 7Down or Tie",
+            "probability": "percentage e.g. 68%",
+            "analysis": "A brief 2-line explanation in simple Urdu/Hindi language (using english alphabet/roman urdu) explaining the pattern."
+        }}
+        """
+        
+        response = model.generate_content(prompt)
+        # JSON parse karna
+        clean_text = response.text.strip().replace("```json", "").replace("```", "")
+        data = json.loads(clean_text)
+        st.session_state.ai_prediction = data
+    except Exception as e:
+        st.session_state.ai_prediction = {
+            "prediction": "Error",
+            "probability": "0%",
+            "analysis": f"AI Connection issue or invalid API Key."
+        }
+
+# --- App UI Layout ---
+st.title("🤖 AI Game Predictor Pro")
+st.caption("AI-powered pattern analyzer for 7Up 7Down")
+
+# Step 1: Manual History Input Buttons
+st.subheader("📊 Tap Last Result")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    if st.button("🔽 DOWN", use_container_width=True):
-        st.session_state.history.append('down')
-        st.toast("Data Added [ 7 DOWN ] Successfully.! ✅", icon="🟢")
+    if st.button("🔼 7Up", key="btn_up"):
+        st.session_state.history.append("7Up")
+        if len(st.session_state.history) > 12: st.session_state.history.pop(0) # Keep last 12
+        get_ai_prediction(st.session_state.history)
 
 with col2:
-    if st.button("🎯 EXACT 7", use_container_width=True):
-        st.session_state.history.append('7')
-        st.toast("Data Added [ EXACT 7 ] Successfully.! ✅", icon="🟢")
+    if st.button("🎲 Tie (7)", key="btn_tie"):
+        st.session_state.history.append("Tie")
+        if len(st.session_state.history) > 12: st.session_state.history.pop(0)
+        get_ai_prediction(st.session_state.history)
 
 with col3:
-    if st.button("🔼 UP", use_container_width=True):
-        st.session_state.history.append('up')
-        st.toast("Data Added [ 7 UP ] Successfully.! ✅", icon="🟢")
+    if st.button("🔽 7Down", key="btn_down"):
+        st.session_state.history.append("7Down")
+        if len(st.session_state.history) > 12: st.session_state.history.pop(0)
+        get_ai_prediction(st.session_state.history)
 
-history = st.session_state.history
-total = len(history)
-
-# --- Default Percentages ---
-p_down, p_seven, p_up = 41.7, 16.6, 41.7
-
-if total >= 3:
-    up_count, down_count, seven_count = history.count('up'), history.count('down'), history.count('7')
-    
-    weight_down = 41.66 + (up_count - down_count) * 5
-    weight_up = 41.66 + (down_count - up_count) * 5
-    weight_seven = 16.66
-    
-    if history[-2:] == ['up', 'up']:
-        weight_down += 15; weight_up -= 15
-    elif history[-2:] == ['down', 'down']:
-        weight_up += 15; weight_down -= 15
-
-    weight_down = max(10, min(80, weight_down))
-    weight_up = max(10, min(80, weight_up))
-    
-    total_weight = weight_down + weight_up + weight_seven
-    p_down = round((weight_down / total_weight) * 100, 1)
-    p_up = round((weight_up / total_weight) * 100, 1)
-    p_seven = round((weight_seven / total_weight) * 100, 1)
-
-# --- 3 Stylish Boxes Layout ---
-st.markdown("<p style='margin: 8px 0 2px 0; font-weight:bold; font-size:14px;'>🔮 Probabilities:</p>", unsafe_allow_html=True)
-box_col1, box_col2, box_col3 = st.columns(3)
-
-with box_col1:
-    st.markdown(f"""
-    <div style="padding: 8px; background-color: #1E3A8A; border-radius: 8px; border: 2px solid #3B82F6; text-align: center;">
-        <p style="font-size: 12px; margin: 0; color: #93C5FD; font-weight: bold;">7 DOWN</p>
-        <p style="font-size: 20px; margin: 0; color: #FFFFFF; font-weight: bold;">{p_down}%</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with box_col2:
-    st.markdown(f"""
-    <div style="padding: 8px; background-color: #7F1D1D; border-radius: 8px; border: 2px solid #EF4444; text-align: center;">
-        <p style="font-size: 12px; margin: 0; color: #FCA5A5; font-weight: bold;">EXACT 7</p>
-        <p style="font-size: 20px; margin: 0; color: #FFFFFF; font-weight: bold;">{p_seven}%</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with box_col3:
-    st.markdown(f"""
-    <div style="padding: 8px; background-color: #064E3B; border-radius: 8px; border: 2px solid #10B981; text-align: center;">
-        <p style="font-size: 12px; margin: 0; color: #A7F3D0; font-weight: bold;">7 UP</p>
-        <p style="font-size: 20px; margin: 0; color: #FFFFFF; font-weight: bold;">{p_up}%</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# --- Best Recommendation Banner ---
-if total >= 3:
-    highest_prob = max(p_down, p_up, p_seven)
-    if highest_prob == p_down:
-        rec_text = "BET: [ 7 DOWN ]"; rec_color = "#3B82F6"
-    elif highest_prob == p_up:
-        rec_text = "BET: [ 7 UP ]"; rec_color = "#10B981"
-    else:
-        rec_text = "BET: [ EXACT 7 ]"; rec_color = "#EF4444"
-        
-    st.markdown(f"""
-    <div style="margin-top: 8px; padding: 6px; background-color: #262626; border-radius: 5px; text-align: center; border-left: 5px solid {rec_color};">
-        <p style="font-size: 14px; margin: 0; color: #FFFFFF; font-weight: bold;">🎯 {rec_text}</p>
-    </div>
-    """, unsafe_allow_html=True)
+# Live History Tracker Display
+if st.session_state.history:
+    st.markdown(f"**Current History Sequence:** `{' -> '.join(st.session_state.history)}`")
+    if st.button("🧹 Clear History"):
+        st.session_state.history = []
+        st.session_state.ai_prediction = {"prediction": "Waiting for data...", "probability": "--", "analysis": "Enter past rounds to start AI analysis."}
+        st.rerun()
 else:
-    st.markdown(f"<p style='color: gray; font-size:12px; margin-top:5px;'>⚠️ Enter {3-total} more rounds...</p>", unsafe_allow_html=True)
+    st.info("Tap the buttons above as rounds finish in your live game to train the AI.")
 
-# --- Compact History Log ---
-if total > 0:
-    st.markdown(f"<p style='margin: 8px 0 0 0; font-size:12px;'><b>History:</b> {' ➡️ '.join(history[-6:])}</p>", unsafe_allow_html=True)
-    
+st.markdown("---")
+
+# Step 2: AI Live Prediction Dashboard
+st.subheader("🎯 Live AI Forecast")
+
+pred = st.session_state.ai_prediction["prediction"]
+prob = st.session_state.ai_prediction["probability"]
+analysis = st.session_state.ai_prediction["analysis"]
+
+# Color code predictions dynamically
+if "7Up" in pred:
+    color = "#4CAF50" # Green
+elif "7Down" in pred:
+    color = "#FF5252" # Red
+else:
+    color = "#FFC107" # Yellow/Orange
+
+st.markdown(f"""
+<div class="result-box" style="border-left-color: {color};">
+    <h3 style="margin:0; color:{color};">Next Target: {pred}</h3>
+    <h4 style="margin:5px 0 0 0; color:#ffffff;">Probability Accuracy: {prob}</h4>
+    <p style="margin:10px 0 0 0; font-size:14px; color:#cccccc;"><b>AI Analysis:</b> {analysis}</p>
+</div>
+""", unsafe_allow_html=True)
