@@ -5,7 +5,7 @@ import json
 # Page Configuration
 st.set_page_config(page_title="AI Predictor Pro", page_icon="🤖", layout="centered")
 
-# --- Overhauled Premium CSS Framework (Compact Spacing & Badges) ---
+# --- Overhauled Premium CSS Framework (White Buttons, Press Actions & Live Record Box) ---
 st.markdown("""
     <style>
     /* Prevent Any Scrolling Globally */
@@ -21,6 +21,26 @@ st.markdown("""
     
     /* Auto Hide Default Overheads */
     footer, header {visibility: hidden;}
+
+    /* --- Custom White Buttons Styling --- */
+    div.stButton > button {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        border: 1px solid #CCCCCC !important;
+        font-weight: bold !important;
+        font-size: 11px !important;
+        padding: 6px 2px !important;
+        border-radius: 6px !important;
+        transition: all 0.15s ease-in-out;
+    }
+    
+    /* Button On-Press (Active/Focus State) to Green */
+    div.stButton > button:active, div.stButton > button:focus {
+        background-color: #4CAF50 !important;
+        color: #FFFFFF !important;
+        border-color: #4CAF50 !important;
+        box-shadow: 0 0 10px rgba(76, 175, 80, 0.6) !important;
+    }
 
     /* Custom Mobile Grid for Badges */
     .mobile-row {
@@ -54,26 +74,48 @@ st.markdown("""
         box-shadow: 0 4px 10px rgba(0,0,0,0.4);
     }
 
-    /* History Badge Stream View */
-    .history-container {
+    /* History Outer Box Container */
+    .history-outer-box {
+        background: #10141d;
+        border-radius: 6px;
+        border: 1px solid #222;
+        padding: 6px;
+    }
+
+    /* Past Records Stream View (Greyed subtle look) */
+    .history-past-container {
         display: flex;
         flex-direction: row;
         gap: 4px;
         overflow-x: auto;
         white-space: nowrap;
-        padding: 6px;
-        background: #10141d;
-        border-radius: 6px;
-        border: 1px dashed #333;
-        min-height: 32px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #222;
+        margin-bottom: 6px;
+        min-height: 26px;
         align-items: center;
     }
-    .hist-badge {
-        font-size: 10px;
+    .hist-badge-past {
+        font-size: 9px;
+        font-weight: normal;
+        padding: 1px 5px;
+        border-radius: 3px;
+        color: #888888;
+        background-color: #1a1e29;
+        border: 1px solid #333;
+    }
+
+    /* Newest Fresh Data Highlight Box */
+    .fresh-data-highlight {
+        background-color: #111827;
+        border: 1.5px solid #00f2fe;
+        border-radius: 5px;
+        padding: 4px 8px;
+        text-align: center;
+        font-size: 11px;
         font-weight: bold;
-        padding: 2px 6px;
-        border-radius: 4px;
-        color: white;
+        color: #ffffff;
+        box-shadow: 0 0 8px rgba(0, 242, 254, 0.2);
     }
     
     /* Inline Status Feedback Badge */
@@ -158,26 +200,26 @@ st.markdown('<div style="font-size:10px; color:#777; font-weight:bold; text-tran
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    if st.button("🔼 7Up", key="action_up", use_container_width=True):
+    if st.button("🔼 7Up\n(8-12)", key="action_up", use_container_width=True):
         st.session_state.history.append("7Up")
-        st.session_state.last_status = "🟢 Data Added 7Up Successfully!"
+        st.session_state.last_status = "Data Entered Successfully"
         process_prediction()
         st.rerun()
 with col2:
-    if st.button("🎲 7Exit", key="action_tie", use_container_width=True):
+    if st.button("🎲 7Exit\n(7)", key="action_tie", use_container_width=True):
         st.session_state.history.append("Tie")
-        st.session_state.last_status = "🟡 Data Added 7Exit Successfully!"
+        st.session_state.last_status = "Data Entered Successfully"
         process_prediction()
         st.rerun()
 with col3:
-    if st.button("🔽 7Down", key="action_down", use_container_width=True):
+    if st.button("🔽 7Down\n(2-6)", key="action_down", use_container_width=True):
         st.session_state.history.append("7Down")
-        st.session_state.last_status = "🔴 Data Added 7Down Successfully!"
+        st.session_state.last_status = "Data Entered Successfully"
         process_prediction()
         st.rerun()
 
-# Dynamic Status Badge (Replaced pop-up toast completely to avoid hiding buttons)
-st.markdown(f'<div class="status-alert">{st.session_state.last_status}</div>', unsafe_allow_html=True)
+# Dynamic Status Badge 
+st.markdown(f'<div class="status-alert">🟢 {st.session_state.last_status}</div>', unsafe_allow_html=True)
 
 # Row 2: Status Matrices
 st.markdown('<div style="font-size:10px; color:#777; font-weight:bold; text-transform:uppercase; margin:4px 0 2px 0;">📈 Possible Accuracy</div>', unsafe_allow_html=True)
@@ -213,30 +255,51 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Row 4: Dynamic History Tracking Line (Live Record View Fixed)
+# Row 4: Dynamic History Tracking Line (Segregated Live View)
 st.markdown('<div style="font-size:10px; color:#777; font-weight:bold; text-transform:uppercase; margin:4px 0 2px 0;">📜 Recently Added Data Record</div>', unsafe_allow_html=True)
 
 if st.session_state.history:
-    html_stream = '<div class="history-container">'
-    for idx, item in enumerate(st.session_state.history):
-        if item == "7Up": bg, text = "#1b5e20", "7Up"
-        elif item == "7Down": bg, text = "#b71c1c", "7Down"
-        else: bg, text = "#e65100", "Exit"
-        html_stream += f'<span class="hist-badge" style="background-color:{bg};">{idx+1}. {text}</span>'
+    # Get all records except the absolute newest one
+    past_records = st.session_state.history[:-1]
+    fresh_record = st.session_state.history[-1]
+    
+    # Fresh label text formatting
+    if fresh_record == "7Up": fresh_label = "7Up (8-12)"
+    elif fresh_record == "7Down": fresh_label = "7Down (2-6)"
+    else: fresh_label = "7Exit (7)"
+
+    html_stream = '<div class="history-outer-box">'
+    
+    # 1. Past Row Container
+    html_stream += '<div class="history-past-container">'
+    if past_records:
+        for idx, item in enumerate(past_records):
+            if item == "7Up": text = "7Up"
+            elif item == "7Down": text = "7Down"
+            else: text = "Exit"
+            html_stream += f'<span class="hist-badge-past">{idx+1}. {text}</span>'
+    else:
+        html_stream += '<span style="color:#555; font-size:9px;">No previous history</span>'
     html_stream += '</div>'
+    
+    # 2. Fresh Highlighted Row (Always at the bottom line)
+    html_stream += f'<div class="fresh-data-highlight">Outcome: {fresh_label}</div>'
+    html_stream += '</div>'
+    
     st.markdown(html_stream, unsafe_allow_html=True)
 else:
-    st.markdown('<div class="history-container" style="color:#555; font-size:10px; justify-content:center;">No data input yet</div>', unsafe_allow_html=True)
+    st.markdown('<div class="history-outer-box" style="color:#555; font-size:10px; text-align:center;">No data input yet</div>', unsafe_allow_html=True)
 
 # Row 5: Clear Functional Data Reset
 if st.session_state.history:
     st.markdown('<div style="margin-top: 4px;"></div>', unsafe_allow_html=True)
     if st.button("🧹 Clear Training Data", key="wipe_engine", use_container_width=True):
         st.session_state.history = []
-        st.session_state.last_status = "Data engine reset successfully."
+        st.session_state.last_status = "Waiting for data..."
         st.session_state.ai_prediction = {
             "prediction": "7Up", "probability": "55%", 
             "up_prob": "33%", "down_prob": "33%", "tie_prob": "34%",
             "analysis": "System online. Tap history to train."
         }
         st.rerun()
+    
